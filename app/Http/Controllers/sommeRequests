@@ -1,0 +1,43 @@
+SELECT
+    TABLE_NAME,
+    COLUMN_NAME,
+    CONSTRAINT_NAME,
+    REFERENCED_TABLE_NAME,
+    REFERENCED_COLUMN_NAME
+FROM
+    INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+WHERE
+	REFERENCED_TABLE_SCHEMA = 'db_name'
+    AND REFERENCED_TABLE_NAME = 'table_name';
+	
+/////////////////////////////////////////////////
+	
+SELECT
+    TABLE_NAME,
+    COLUMN_NAME,
+    CONSTRAINT_NAME,
+    REFERENCED_TABLE_NAME,
+    REFERENCED_COLUMN_NAME
+FROM
+    INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+WHERE
+	REFERENCED_TABLE_SCHEMA = 'basebourse2202'
+    AND REFERENCED_TABLE_NAME = 'dossier'
+    AND REFERENCED_COLUMN_NAME = 'filiere_id';
+	///////////////////////////////////////
+	
+	
+<!--script>
+function printf() {
+                    var divName= "myTable";
+
+                     var printContents = document.getElementById(divName).innerHTML;
+                     var originalContents = document.body.innerHTML;
+
+                     document.body.innerHTML = printContents;
+
+                     window.print();
+
+                     document.body.innerHTML = originalContents;
+                }
+</script-->

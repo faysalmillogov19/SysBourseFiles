@@ -1,0 +1,109 @@
+ligne 233
+
+$element=DB::table("paiement_periodique")->where('annee_academique_id',$m->annee_academique_id)
+																		->where('boursier_id',$m->boursier_id)
+																		->where('element_bourse_id',$m->element_bourse_id);
+								$max_fin=$element->max('fin_periode');										
+								$min_debut=$element->min('debut_periode');
+								
+								$nbr=$element->min('nombre');	
+								$nombre_paye=0+$nbr;
+								$nombre_restant_a_payer=$m->nombre_total_a_payer-$nombre_paye;
+								
+								
+								if( ($max_fin!=null && $min_debut!=null) ||  $nbr!=null)
+								{
+									
+									
+										$nombre_paye=$max_fin-$min_debut+1;
+										$nombre_restant_a_payer=$m->nombre_total_a_payer - $nombre_paye;
+										dd($nombre_paye);
+									
+										
+										if($debut_entree<$min_debut && $nombre_restant_a_payer>0)
+										{
+											$nombre_a_paye=min($min_debut-$debut_entree,$nombre_restant_a_payer);
+											
+											$net_a_payer=$nombre_a_paye*$m->montant;
+											$nombre_restant_a_payer=$nombre_restant_a_payer - $nombre_a_paye;
+											$debut_periode=$min_debut-$nombre_a_paye;
+											$fin_periode=$min_debut-1;
+											CustomFunction::InsertPaiementPeriodique($m->boursier_id,$debut_periode,$fin_periode,$m->nombre_total_a_payer,$m->element_bourse_id,$net_a_payer,$m->annee_academique_id,$m->niveau_etude_id);
+										}
+										
+										if($fin_entree>$max_fin && $nombre_restant_a_payer>0)
+										{
+											
+											$nombre_a_paye=min($fin_entree-$max_fin,$nombre_restant_a_payer);
+											$net_a_payer=$nombre_a_paye*$m->montant;
+											$nombre_restant_a_payer=$nombre_restant_a_payer - $nombre_a_paye;
+											$debut_periode=$max_fin+1;
+											$fin_periode=$debut_periode+$nombre_a_paye;
+											CustomFunction::InsertPaiementPeriodique($m->boursier_id,$debut_periode,$fin_periode,$m->nombre_total_a_payer,$m->element_bourse_id,$net_a_payer,$m->annee_academique_id,$m->niveau_etude_id);
+											
+										}
+								}
+								else
+								{
+									$nombre_a_paye=min($fin_entree-$debut_entree+1,$nombre_restant_a_payer);
+									$net_a_payer=$nombre_a_paye*$m->montant;
+									$debut_periode=$;debut_entree
+									$fin_periode=$debut_entree+$nombre_a_paye;
+									CustomFunction::InsertPaiementPeriodique($m->boursier_id,$debut_periode,$fin_periode,$m->nombre_total_a_payer,$m->element_bourse_id,$net_a_payer,$m->annee_academique_id,$m->niveau_etude_id);
+								}
+								
+							}
+							
+						
+ligne 287
+$elements=DB::table('paiement_periodique')->where('boursier_id',$m->devient_id)
+														->where('annee_academique_id',$m->annee_academique_id)
+														->select('paiement_periodique.element_bourse_id as element_bourse_id',DB::raw('sum(paiement_periodique.net_a_payer) as net_a_payer'), DB::raw('max(paiement_periodique.nombre) as nombre'),DB::raw('min(paiement_periodique.debut_periode) as debut_periode'),DB::raw('max(paiement_periodique.fin_periode) as fin_periode'))
+														->groupBy('element_bourse_id')
+														->get();
+				$compte=DB::table('compte')->where('boursier_id',$m->devient_id)
+										   ->first();
+			if($compte)
+			{
+				$compte=$compte->num_compte;
+				
+				
+			
+				$row=[
+						"Nom"=>$m->nom_etudiant.' '.$m->prenom_etudiant,
+						"N° Attestation"=>$m->numero_attestation_complet,
+						"N° Compte"=>$compte,
+						"Date_Naissance"=>date('d-m-Y',strtotime($m->date_naiss_etudiant)),
+						"filiere"=>$m->libelle_filiere,
+						"niveau"=>$m->libelle_niveau,
+						//"structure"=>$m->nom_structure,
+					];
+			
+				foreach($elements as $element)
+				{
+					$type_bourse= DB::table('element_bourse')->where('element_bourse.id',$element->element_bourse_id)
+															->join('type_element_bourse','type_element_bourse.id','=','element_bourse.type_element_bourse_id')
+															->first();
+					$nombre_au_debut=max($request->debut,$element->debut_periode);
+					$nombre_a_fin=min($request->fin,$element->fin_periode);
+					$nombre_mois_paye=$element->fin_periode-$element->debut_periode+1;
+					$nombre_mois_affiche=$nombre_a_fin-$nombre_au_debut+1;
+					
+					if($element->nombre!=NULL && (int)$request->debut!=1)
+					{
+						$element->net_a_payer=0;
+					}
+					else if($element->nombre==NULL)
+					{
+						$element->net_a_payer=$element->net_a_payer * ($nombre_mois_affiche / $nombre_mois_paye);
+					}
+					$row[$type_bourse->libelle_element]=$element->net_a_payer;
+				}
+				array_push($my_request,$row);
+				
+				$elements=DB::table('paiement_periodique')->where('boursier_id',$m->devient_id)
+															->where('annee_academique_id',$m->annee_academique_id)
+															->select('paiement_periodique.element_bourse_id as element_bourse_id',DB::raw('sum(paiement_periodique.net_a_payer) as net_a_payer'), DB::raw('max(paiement_periodique.nombre) as nombre'),DB::raw('min(paiement_periodique.debut_periode) as debut_periode'),DB::raw('max(paiement_periodique.fin_periode) as fin_periode'))
+															->groupBy('element_bourse_id')
+															->get();						
+					$i++;						
